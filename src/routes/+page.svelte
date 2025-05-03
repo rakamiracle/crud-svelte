@@ -1,59 +1,89 @@
-<script lang="ts">
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcomeFallback from '$lib/images/svelte-welcome.png';
+<script>
+  let tasks = []; // Array untuk menyimpan tugas
+  let newTask = ""; // Input untuk tugas baru
+  let editingTask = null; // State untuk tugas yang sedang diedit
+  let editText = ""; // Input untuk teks yang diedit
+
+  // Fungsi untuk menambah tugas
+  function addTask() {
+    if (newTask.trim() === "") return; // Jangan tambah jika input kosong
+    tasks = [...tasks, { id: Date.now(), text: newTask, completed: false }];
+    newTask = ""; // Reset input
+  }
+
+  // Fungsi untuk menghapus tugas
+  function deleteTask(id) {
+    tasks = tasks.filter((task) => task.id !== id);
+  }
+
+  // Fungsi untuk toggle status selesai
+  function toggleTask(id) {
+    tasks = tasks.map((task) =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    );
+  }
+
+  // Fungsi untuk mulai mengedit
+  function startEdit(task) {
+    editingTask = task;
+    editText = task.text;
+  }
+
+  // Fungsi untuk simpan perubahan
+  function saveEdit(id) {
+    tasks = tasks.map((task) =>
+      task.id === id ? { ...task, text: editText } : task
+    );
+    editingTask = null; // Reset setelah simpan
+  }
+
+  // Fungsi untuk batal edit
+  function cancelEdit() {
+    editingTask = null;
+  }
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
+<div class="max-w-md mx-auto mt-10">
+  <h1 class="text-3xl font-bold text-center mb-6">Daftar Tugas</h1>
 
-<section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcomeFallback} alt="Welcome" />
-			</picture>
-		</span>
+  <!-- Form untuk menambah tugas -->
+  <div class="flex gap-2 mb-4">
+    <input
+      type="text"
+      bind:value={newTask}
+      placeholder="Masukkan tugas baru..."
+      class="flex-1 p-2 border rounded"
+    />
+    <button on:click={addTask} class="bg-blue-500 text-white p-2 rounded">
+      Tambah
+    </button>
+  </div>
 
-		to your new<br />SvelteKit app
-	</h1>
-
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
-
-	<Counter />
-</section>
-
-<style>
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
-	}
-
-	h1 {
-		width: 100%;
-	}
-
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
-
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
-	}
-</style>
+  <!-- Daftar tugas -->
+  {#if tasks.length === 0}
+    <p class="text-center text-gray-500">Belum ada tugas.</p>
+  {:else}
+    <ul class="space-y-2">
+      {#each tasks as task (task.id)}
+        <li
+          class="flex justify-between items-center p-2 border rounded {task.completed
+            ? 'bg-green-100'
+            : ''}"
+        >
+          <span
+            on:click={() => toggleTask(task.id)}
+            class="{task.completed ? 'line-through text-gray-500' : ''} cursor-pointer"
+          >
+            {task.text}
+          </span>
+          <button
+            on:click={() => deleteTask(task.id)}
+            class="text-red-500 hover:text-red-700"
+          >
+            Hapus
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+</div>

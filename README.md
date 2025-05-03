@@ -36,3 +36,20 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+
+```bash 
+npm run format - Untuk memformat semua file
+```
+
+```bash 
+npm run lint - Untuk memeriksa masalah kode
+```
+
+```bash 
+npm run build - Build aplikasi
+```
+
+```bash 
+npm run preview - Preview hasil build
+```
