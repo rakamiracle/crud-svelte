@@ -9,11 +9,35 @@
   let showConfirmDelete: boolean = false;
   let employeeToDelete: number | null = null;
   let filterDept: string = '';
+  let sortByName: 'asc' | 'desc' | 'none' = 'none';
+  
+  // Department suggestions
+  const departments = ['Engineering', 'HR', 'Marketing', 'Finance', 'IT', 'Operations'];
+  let departmentSuggestions: string[] = [];
 
-  // Explicitly type the filtered employees
+  // Update filtered employees with sorting
   $: filteredEmployees = $employees && filterDept
-    ? $employees.filter((emp: Employee) => emp.department.toLowerCase().includes(filterDept.toLowerCase()))
-    : $employees || [];
+    ? $employees
+        .filter((emp: Employee) => emp.department.toLowerCase().includes(filterDept.toLowerCase()))
+        .sort((a: Employee, b: Employee) => {
+          if (sortByName === 'asc') return a.name.localeCompare(b.name);
+          if (sortByName === 'desc') return b.name.localeCompare(a.name);
+          return 0;
+        })
+    : $employees
+        ?.sort((a: Employee, b: Employee) => {
+          if (sortByName === 'asc') return a.name.localeCompare(b.name);
+          if (sortByName === 'desc') return b.name.localeCompare(a.name);
+          return 0;
+        }) || [];
+
+  // Update department suggestions based on input
+  $: departmentSuggestions = newEmployee.department
+    ? departments.filter(d => 
+        d.toLowerCase().includes(newEmployee.department.toLowerCase()) && 
+        d.toLowerCase() !== newEmployee.department.toLowerCase()
+      )
+    : departments;
 
   function showMessage(text: string, type: string): void {
     message = text;
@@ -45,11 +69,16 @@
       employees.add(newEmployee);
       showMessage('Employee added successfully!', 'success');
     }
+    resetForm();
+  }
+
+  function resetForm(): void {
     newEmployee = { name: '', role: '', department: '' };
+    editIndex = -1;
   }
 
   function editEmployee(id: number): void {
-    const index = $employees.findIndex((emp: Employee) => emp.id === id);
+    const index = $employees helicopters Helicopterindex((emp: Employee) => emp.id === id);
     if (index >= 0) {
       editIndex = index;
       newEmployee = { 
@@ -77,6 +106,17 @@
   function cancelDelete(): void {
     showConfirmDelete = false;
     employeeToDelete = null;
+  }
+
+  function selectDepartment(dept: string): void {
+    newEmployee.department = dept;
+    departmentSuggestions = [];
+  }
+
+  function toggleSort(): void {
+    if (sortByName === 'none') sortByName = 'asc';
+    else if (sortByName === 'asc') sortByName = 'desc';
+    else sortByName = 'none';
   }
 </script>
 
@@ -113,7 +153,7 @@
           class="w-full border-2 border-gray-300 p-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
         >
       </div>
-      <div>
+      <div class="relative">
         <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
         <input 
           id="department"
@@ -122,25 +162,58 @@
           placeholder="e.g., Engineering" 
           class="w-full border-2 border-gray-300 p-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
         >
+        {#if departmentSuggestions.length > 0}
+          <ul class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-auto">
+            {#each departmentSuggestions as dept}
+              <li 
+                class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                on:click={() => selectDepartment(dept)}
+              >
+                {dept}
+              </li>
+            {/each}
+          </ul>
+        {/if}
       </div>
     </div>
-    <button 
-      on:click={addEmployee} 
-      class="mt-4 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
-    >
-      {editIndex >= 0 ? 'Update Employee' : 'Add Employee'}
-    </button>
+    <div class="mt-4 flex gap-3">
+      <button 
+        on:click={addEmployee} 
+        class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        {editIndex >= 0 ? 'Update Employee' : 'Add Employee'}
+      </button>
+      <button 
+        on:click={resetForm}
+        class="bg-gray-300 text-gray-800 p-2 rounded-lg hover:bg-gray-400 transition-colors"
+      >
+        Clear Form
+      </button>
+    </div>
   </div>
 
-  <div class="mb-6">
-    <label for="filter-dept" class="block text-sm font-medium text-gray-700 mb-1">Filter by Department</label>
-    <input 
-      id="filter-dept"
-      type="text" 
-      bind:value={filterDept} 
-      placeholder="Type department name..." 
-      class="w-full md:w-1/3 border-2 border-gray-300 p-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-    >
+  <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <label for="filter-dept" class="block text-sm font-medium text-gray-700 mb-1">Filter by Department</label>
+      <input 
+        id="filter-dept"
+        type="text" 
+        bind:value={filterDept} 
+        placeholder="Type department name..." 
+        class="w-full md:w-64 border-2 border-gray-300 p-2 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+      >
+    </div>
+    <div class="flex items-center gap-3">
+      <button
+        on:click={toggleSort}
+        class="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+      >
+        Sort by Name {sortByName === 'asc' ? '↑' : sortByName === 'desc' ? '↓' : ''}
+      </button>
+      <span class="text-gray-600">
+        Total Employees: {filteredEmployees.length}
+      </span>
+    </div>
   </div>
 
   {#if !$employees || $employees.length === 0}
